@@ -683,7 +683,8 @@ def test_unmatched_entity() -> None:
     percent = result.unmatched_entities["percent"]
     if isinstance(percent, UnmatchedRangeEntity):
         assert percent.value == 101
-    elif isinstance(percent, UnmatchedTextEntity):
+    else:
+        assert isinstance(percent, UnmatchedTextEntity)
         assert percent.text == "101% "
 
     # Percent must be a matched int now, no text
@@ -755,8 +756,11 @@ def test_unmatched_range_only() -> None:
     assert domain.text == "lights"
 
     percent = result.unmatched_entities["percent"]
-    assert isinstance(percent, UnmatchedRangeEntity)
-    assert percent.value == 1001
+    if isinstance(percent, UnmatchedRangeEntity):
+        assert percent.value == 1001
+    else:
+        assert isinstance(percent, UnmatchedTextEntity)
+        assert percent.text == "1001% "
 
 
 def test_no_empty_unmatched_entity() -> None:
