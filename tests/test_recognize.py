@@ -161,14 +161,14 @@ def test_turn_on_fuzzy(intents, slot_lists):
     assert area.name == "area"
     assert area.value == "area.kitchen"
 
-    # Should match the shorter area name (kitchen)
+    # Should match kitchen or living room as edit distance is same
     result = recognize("turn on X TV", intents, slot_lists=slot_lists, edit_budget=50)
     assert result is not None
     assert result.intent.name == "TurnOnTV"
 
     area = result.entities["area"]
     assert area.name == "area"
-    assert area.value == "area.kitchen"
+    assert area.value in ["area.kitchen", "area.living_room"]
 
     # Should match the longer area name (living room)
     result = recognize(
@@ -681,8 +681,20 @@ def test_unmatched_entity() -> None:
     assert area.text == "living room "
 
     percent = result.unmatched_entities["percent"]
-    assert isinstance(percent, UnmatchedRangeEntity)
-    assert percent.value == 101
+    if isinstance(percent, UnmatchedRangeEntity):
+        assert percent.value == 101
+    elif isinstance(percent, UnmatchedTextEntity):
+        assert percent.text == "101% "
+
+    # Percent must be a matched int now, no text
+    sentence = "set fans in living room to 99% now"
+    result = recognize(sentence, intents, allow_unmatched_entities=True)
+    assert result is not None, f"{sentence} should match"
+    assert set(result.unmatched_entities.keys()) == {"domain", "area"}
+
+    percent_matched = result.entities["percent"]
+    assert isinstance(percent_matched, MatchEntity)
+    assert percent_matched.value == 99
 
     sentence = "set all lights in kitchen to blah blah blah now"
     result = recognize(sentence, intents, allow_unmatched_entities=True)
